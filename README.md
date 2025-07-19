@@ -31,6 +31,8 @@ Before running experiments, please ensure that the SGLang backend is properly la
 
 The startup command for SGLang is provided in the sglang.txt file
 
+Once everything is ready, you can run the following scripts to obtain the results.
+
 ```bash
 # Run the base model
 python baseRec_multi.py
