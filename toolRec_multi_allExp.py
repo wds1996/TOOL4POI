@@ -15,13 +15,11 @@ import queue
 
 
 def acc_at_k(preds, target, k):
-    """Accuracy@k: 预测前k个中是否命中真实值"""
     if k > len(preds):
         k = len(preds)
     return 1.0 if target in preds[:k] else 0.0
 
 def jug_mrr(preds, target):
-    """Mrr: Reciprocal Rank（对单个样本）"""
     for i, p in enumerate(preds):
         if p == target:
             return 1.0 / (i + 1)
@@ -55,13 +53,12 @@ def get_function_by_name(func_name):
     if func_name == "get_poi_infos":
         return get_poi_infos
 
-# 线程安全的客户端管理器
+
 class ClientManager:
     def __init__(self, api_key="NaN", base_url="http://localhost:8000/v1", max_clients=10):
         self.api_key = api_key
         self.base_url = base_url
         self.clients = queue.Queue()
-        # 预创建客户端连接池
         for _ in range(max_clients):
             client = OpenAI(api_key=api_key, base_url=base_url)
             self.clients.put(client)
@@ -72,7 +69,6 @@ class ClientManager:
     def return_client(self, client):
         self.clients.put(client)
 
-# 线程安全的千问模型调用函数
 def call_qwen_threadsafe(client_manager, model_id, messages, tools=None):
     client = client_manager.get_client()
     try:
@@ -91,7 +87,6 @@ def call_qwen_threadsafe(client_manager, model_id, messages, tools=None):
         client_manager.return_client(client)
 
 
-# 模块1：用户分析
 def analyze_user(dataflod, query, getinfo, client_manager, model_id):
     prompt = f"""You are a user preference assistant in a recommendation system.  
 Based on the user's historical visit sequence, analyze their visiting preferences and patterns.
@@ -125,7 +120,6 @@ You should only output the final result in the specified format. Do not include 
     user_preference = call_qwen_threadsafe(client_manager, model_id, messages).choices[0].message.content
     return user_preference
 
-# 模块2：候选检索
 def retrieve_candidates(dataflod, poi_list, user_preference, retrieve, client_manager, model_id):
     prompt = f"""You are a retrieval assistant in a recommendation system. 
 Based on the user's historical visit records and preference information, you may call one or more tools to retrieve a candidate set of POIs that the user is likely to visit.
@@ -173,13 +167,12 @@ You should initialize the candidate set based on the user's last visited POI {po
                 else:
                     print("No valid function call found in the response.")
                     return candidates       
-            # 重新调用模型
+
             chat_response = call_qwen_threadsafe(client_manager, model_id, messages, retrieve) 
         else:
             print("No tool calls found in the response.")
             return candidates
 
-# 模块3：排序
 def rerank_candidates(input_str, next_time, poi_list, client_manager, model_id, dataflod, candidates, getinfo):
 
     prompt = f"""You are a ranking assistant in a recommendation system.  
@@ -199,7 +192,7 @@ Please rerank the candidates according to the likelihood that the user will visi
         {'role': 'system', 'content': prompt},
         {'role': 'user', 'content': input_str}
     ]
-     # 调用模型
+    
     response = call_qwen_threadsafe(client_manager, model_id, messages)
     # response = call_qwen_threadsafe(client_manager, model_id, messages, getinfo)
     messages.append(response.choices[0].message.model_dump())
@@ -222,7 +215,7 @@ Please rerank the candidates according to the likelihood that the user will visi
 
     return result
 
-# 单个查询处理函数
+
 def process_single_query(history, recent, dataflod, getinfo, retrieve, client_manager, model_id):
     """处理单个查询的函数"""
     history_str = history["input"]
@@ -339,13 +332,13 @@ def process_single_query(history, recent, dataflod, getinfo, retrieve, client_ma
         }
 
 def main():
-    # 指定数据集
+
     dataflod = "NYC" # TKY, NYC, CA
     model_id = "/models/Qwen2.5-14B-Instruct"
     model = "QW25-14B"
     # model_id = "/models/Qwen3-14B"
     
-    # 创建客户端管理器
+
     max_threads = 16  # 可以根据服务器性能调整
     client_manager = ClientManager(
         api_key="NaN",
@@ -384,7 +377,6 @@ def main():
 
     queries_to_process = recent[:]
     # queries_to_process = good_data
-    
     
     # 初始化累计指标
     total_queries = len(queries_to_process)
@@ -437,7 +429,6 @@ def main():
     
     print(f"开始处理 {total_queries} 个查询，使用 {max_threads} 个线程...")
     
-    # 使用线程池执行器
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
         # 提交所有任务
         future_to_query = {
@@ -453,7 +444,6 @@ def main():
             ): i for i, query in enumerate(queries_to_process)
         }
         
-        # 使用tqdm显示进度
         with tqdm(total=total_queries, desc="Processing queries") as pbar:
             # 收集结果
             for future in as_completed(future_to_query):
@@ -510,7 +500,7 @@ def main():
                         if result['target_in_final']:
                             good_in_final += 1
 
-                    # 打印单个结果（可选）
+                    # 打印单个结果
                     p = "  target out of history" if queries_to_process[query_idx] in bad_data else "  target in history"
                     if 'error' not in result:
                         print(f"\n查询 {query_idx}: 目标POI: {result['target']} {p}")
@@ -574,7 +564,6 @@ def main():
         print(f"最终推荐结果中包含目标POI比例: {good_in_final / good_total:.4f}")
 
     # 保存结果
-    # 如果文件不存在，则创建文件
     with open(f'results/{dataflod}/{model}/{dataflod}_tool_candidates.json', 'w', encoding='utf-8') as f:
         json.dump(dic_candidates, f, ensure_ascii=False, indent=4)
     with open(f'results/{dataflod}/{model}/{dataflod}_tool_predicted.json', 'w', encoding='utf-8') as f:
