@@ -1,0 +1,8 @@
+{
+    "total_queries": 632,
+    "Accuracy@1": 0.0269,
+    "Accuracy@5": 0.1804,
+    "Accuracy@10": 0.3244,
+    "Mean Reciprocal Rank (MRR)": 0.1000,
+    "在最终推荐结果中目标POI的比例": 0.4383
+}

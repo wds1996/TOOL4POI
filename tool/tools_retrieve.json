@@ -1,0 +1,120 @@
+[
+  {
+  "type": "function",
+  "function": {
+    "name": "filter_poi_by_regions",
+    "description": "Filter POI IDs from the dataset by specific regions. Optionally filter within a candidate POI ID list.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "regions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of POI regions to filter."
+        },
+        "candidate": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Optional list of candidate POI IDs to further filter the result."
+        }
+      },
+      "required": ["regions", "candidate"]
+    }
+  }
+},
+{
+  "type": "function",
+  "function": {
+    "name": "filter_poi_by_categories",
+    "description": "Filter POI IDs from the dataset by specific categories. Optionally filter within a candidate POI ID list.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A list of POI categories to filter."
+        },
+        "candidate": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Optional list of candidate POI IDs to further filter the result."
+        }
+      },
+      "required": ["categories", "candidate"]
+    }
+  }
+},
+{
+  "type": "function",
+  "function": {
+    "name": "sort_by_pid2candidate",
+    "description": "Sort the POIs in the candidate set in ascending order based on their distance to the target POI.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "pid": {
+          "type": "integer",
+          "description": "The reference POI ID from which distances are calculated."
+        },
+        "candidate": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "The candidate POI IDs to be sorted."
+        }
+      },
+      "required": ["pid", "candidate"]
+    }
+  }
+},
+{
+  "type": "function",
+  "function": {
+    "name": "init_candidates",
+    "description": "Initialize candidate set based on user's last visited poi.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "POI_id": {
+          "type": "integer",
+          "items": {
+            "type": "integer"
+          },
+          "description": "A POI ID."
+        }
+      },
+      "required": "POI_id"
+    }
+  }
+},
+{
+  "type": "function",
+  "function": {
+    "name": "finish",
+    "description": "When the candidate list is less than 10 items Return result and Finish the task.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+          "result": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "result."
+          }
+      },
+      "required": ["result"]
+    }
+  }
+}
+]

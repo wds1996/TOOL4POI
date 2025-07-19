@@ -1,0 +1,13 @@
+{
+    "total_queries": 1,
+    "wo_rerank_Acc1": 0.0,
+    "wo_rerank_Acc5": 0.0,
+    "wo_rerank_Acc10": 0.0,
+    "wo_rerank_Mrr": 0.0,
+    "in_rerank_ratio": 0.0,
+    "Acc1": 0.0,
+    "Acc5": 0.0,
+    "Acc10": 0.0,
+    "Mrr": 0.0,
+    "in_final_ratio": 0.0
+}

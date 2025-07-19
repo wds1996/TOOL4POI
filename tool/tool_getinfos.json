@@ -1,0 +1,22 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "get_poi_infos",
+      "description": "Retrieve detailed information for a list of POI IDs.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "poi_list": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "A list of POI IDs whose information will be retrieved."
+          }
+        },
+        "required": ["poi_list"]
+      }
+    }  
+  }
+]

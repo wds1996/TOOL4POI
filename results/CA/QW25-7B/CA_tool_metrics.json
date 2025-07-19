@@ -1,0 +1,13 @@
+{
+    "total_queries": 2737,
+   " wo_rerank Accuracy@1": 0.1644,
+    "wo_rerank Accuracy@5": 0.5499,
+    "wo_rerank Accuracy@10": 0.7106,
+    "wo_rerank Mean Reciprocal Rank (MRR)": 0.3196,
+    "在候选集中目标POI的比例": 0.7669,
+    "Accuracy@1": 0.2302,
+    "Accuracy@5": 0.5535,
+    "Accuracy@10": 0.6931,
+    "Mean Reciprocal Rank (MRR)": 0.3674,
+    "在最终推荐结果中目标POI的比例": 0.7589
+}
