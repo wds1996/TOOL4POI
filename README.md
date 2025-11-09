@@ -1,6 +1,5 @@
 # TOOL4POI
-
-TOOL4POI is a tool-augmented framework designed for open-set Point-of-Interest (POI) recommendation. This repository provides the implementation and necessary data preprocessing steps to reproduce the experimental results in our work.
+AAAI2026, TOOL4POI: A Tool-Augmented LLM Framework for Next POI Recommendation.
 
 ## 📂 Dataset
 
