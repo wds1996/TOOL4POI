@@ -55,7 +55,7 @@ def get_function_by_name(func_name):
 
 
 class ClientManager:
-    def __init__(self, api_key="NaN", base_url="http://localhost:8000/v1", max_clients=10):
+    def __init__(self, api_key="your key", base_url="your url", max_clients=10):
         self.api_key = api_key
         self.base_url = base_url
         self.clients = queue.Queue()
@@ -76,7 +76,7 @@ def call_qwen_threadsafe(client_manager, model_id, messages, tools=None):
             model=model_id,
             messages=messages,
             tools=tools,
-            max_tokens=8192,
+            max_tokens=2048,
             temperature=0,
             # temperature=0.6,
             # top_p=0.8,
@@ -217,7 +217,6 @@ Please rerank the candidates according to the likelihood that the user will visi
 
 
 def process_single_query(history, recent, dataflod, getinfo, retrieve, client_manager, model_id):
-    """处理单个查询的函数"""
     history_str = history["input"]
     recent_str = recent["input"]
     poi_match = re.search(r"records:\s*(\[[^\]]+\])", history_str)
@@ -228,7 +227,6 @@ def process_single_query(history, recent, dataflod, getinfo, retrieve, client_ma
     target = recent["target"]
     error = []
     try:
-        # 模块1：用户分析
         user_preference = analyze_user(dataflod, history_str, getinfo, client_manager, model_id)
     except Exception as e:
         print(f"用户分析失败: {e}")
@@ -236,9 +234,7 @@ def process_single_query(history, recent, dataflod, getinfo, retrieve, client_ma
 
     if user_preference:
         try:
-            # 模块2：候选检索
             candidates = retrieve_candidates(dataflod, poi_list, user_preference, retrieve, client_manager, model_id)
-            # 计算指标
             wo_reranke_acc1 = 1 if target in candidates[:1] else 0
             wo_reranke_acc5 = acc_at_k(candidates, target, 5)
             wo_reranke_acc10 = acc_at_k(candidates, target, 10)
@@ -270,7 +266,6 @@ def process_single_query(history, recent, dataflod, getinfo, retrieve, client_ma
         }
 
     try:
-        # 模块3：排序
         # recent_set = set(poi_list)
         # candidates = set(candidates).union(recent_set)  # 合并候选和最近访问的POI
         # candidates = list(candidates)  
@@ -285,7 +280,6 @@ def process_single_query(history, recent, dataflod, getinfo, retrieve, client_ma
     
         respond = rerank_candidates(recent_str, next_time, poi_list, client_manager, model_id, dataflod, candidates, getinfo)
 
-        # 解析最终推荐结果
         predicted_pids = candidates if candidates else []
         result = re.search(r"<re_rank>(.*?)</re_rank>", respond)
         if result:
@@ -295,7 +289,6 @@ def process_single_query(history, recent, dataflod, getinfo, retrieve, client_ma
             except Exception as e:
                 print(f"解析失败: {e}")
         
-        # 计算指标
         acc1 = 1 if target in predicted_pids[:1] else 0
         acc5 = acc_at_k(predicted_pids, target, 5)
         acc10 = acc_at_k(predicted_pids, target, 10)
@@ -335,34 +328,29 @@ def main():
 
     dataflod = "NYC" # TKY, NYC, CA
     model_id = "/models/Qwen2.5-14B-Instruct"
-    model = "QW25-14B"
-    # model_id = "/models/Qwen3-14B"
     
-
-    max_threads = 16  # 可以根据服务器性能调整
+    max_threads = 16
     client_manager = ClientManager(
         api_key="NaN",
-        base_url="http://localhost:8000/v1",
+        base_url="your url",
         max_clients=max_threads
     )
 
-    # 加载工具文档
     with open('tool/tool_getinfos.json', 'r', encoding='utf-8') as f:
         getinfo = json.load(f)
 
     with open('tool/tools_retrieve.json', 'r', encoding='utf-8') as f:
         retrieve = json.load(f)
     
-    # 加载历史数据
     with open(f'data/{dataflod}/history100.json', 'r', encoding='utf-8') as f:
         history = json.load(f)
-    # 加载最近查询数据
+
     with open(f'data/{dataflod}/recent20.json', 'r', encoding='utf-8') as f:
         recent = json.load(f)
     
     bad_data = []
     good_data = []
-    # 选择要处理的数据范围
+
     for i, qury in enumerate(history):
         poi_match = re.search(r"records:\s*(\[[^\]]+\])", qury["input"])
         if poi_match:
@@ -378,7 +366,7 @@ def main():
     queries_to_process = recent[:]
     # queries_to_process = good_data
     
-    # 初始化累计指标
+
     total_queries = len(queries_to_process)
     wo_rerank_Acc1 = 0.0  
     wo_rerank_Acc5 = 0.0
@@ -392,9 +380,8 @@ def main():
     Mrr = 0.0
     in_final = 0.0
     
-    # bad_data 单独指标初始化
-    bad_total = len(bad_data)
 
+    bad_total = len(bad_data)
     bad_wo_rerank_Acc1 = 0.0
     bad_wo_rerank_Acc5 = 0.0
     bad_wo_rerank_Acc10 = 0.0
@@ -407,9 +394,7 @@ def main():
     bad_in_rerank = 0.0
     bad_in_final = 0.0
 
-    # good_data 单独指标初始化
     good_total = len(good_data)
-
     good_wo_rerank_Acc1 = 0.0
     good_wo_rerank_Acc5 = 0.0
     good_wo_rerank_Acc10 = 0.0
@@ -422,15 +407,11 @@ def main():
     good_in_rerank = 0.0
     good_in_final = 0.0
 
-    # 存储所有结果
     dic_candidates = {}
     dic_predicted = {}
     results = []
     
-    print(f"开始处理 {total_queries} 个查询，使用 {max_threads} 个线程...")
-    
     with ThreadPoolExecutor(max_workers=max_threads) as executor:
-        # 提交所有任务
         future_to_query = {
             executor.submit(
                 process_single_query,
@@ -445,14 +426,12 @@ def main():
         }
         
         with tqdm(total=total_queries, desc="Processing queries") as pbar:
-            # 收集结果
             for future in as_completed(future_to_query):
                 query_idx = future_to_query[future]
                 try:
                     result = future.result()
                     results.append((query_idx, result))
                     
-                    # 更新累计指标
                     wo_rerank_Acc1 += result['wo_rerank']['wo_reranke_acc1']  
                     wo_rerank_Acc5 += result['wo_rerank']['wo_reranke_acc5']
                     wo_rerank_Acc10 += result['wo_rerank']['wo_reranke_acc10']
@@ -480,7 +459,6 @@ def main():
                     if result['target_in_final']:
                         in_final += 1
 
-                    # bad_data 单独记录指标
                     if queries_to_process[query_idx] in bad_data:
                         bad_Acc1 += result['acc1']
                         bad_Acc5 += result['acc5']
@@ -500,7 +478,6 @@ def main():
                         if result['target_in_final']:
                             good_in_final += 1
 
-                    # 打印单个结果
                     p = "  target out of history" if queries_to_process[query_idx] in bad_data else "  target in history"
                     if 'error' not in result:
                         print(f"\n查询 {query_idx}: 目标POI: {result['target']} {p}")
@@ -522,10 +499,8 @@ def main():
                 
                 pbar.update(1)
     
-    # 按查询索引排序结果
     results.sort(key=lambda x: x[0])
     
-    # 打印最终统计结果
     print(f"\n{'='*50}")
     print(f"处理完成！总查询数: {total_queries}")
 
@@ -541,7 +516,6 @@ def main():
     print(f"Mean Reciprocal Rank (MRR): {Mrr / total_queries:.4f}")
     print(f"在最终推荐结果中目标POI的比例: {in_final / total_queries:.4f}")
     
-    # bad_data 额外指标
     if bad_total > 0:
         print(f"\n{'='*50}")
         print(f"bad_data 查询统计 (共 {bad_total} 条):")
@@ -552,7 +526,6 @@ def main():
         print(f"候选集中包含目标POI比例: {bad_in_rerank / bad_total:.4f}")
         print(f"最终推荐结果中包含目标POI比例: {bad_in_final / bad_total:.4f}")
     
-    # good_data 额外指标
     if good_total > 0:
         print(f"\n{'='*50}")
         print(f"good_data 查询统计 (共 {good_total} 条):")
@@ -563,13 +536,11 @@ def main():
         print(f"候选集中包含目标POI比例: {good_in_rerank / good_total:.4f}")
         print(f"最终推荐结果中包含目标POI比例: {good_in_final / good_total:.4f}")
 
-    # 保存结果
     with open(f'results/{dataflod}/{model}/{dataflod}_tool_candidates.json', 'w', encoding='utf-8') as f:
         json.dump(dic_candidates, f, ensure_ascii=False, indent=4)
     with open(f'results/{dataflod}/{model}/{dataflod}_tool_predicted.json', 'w', encoding='utf-8') as f:
         json.dump(dic_predicted, f, ensure_ascii=False, indent=4)
     
-    # 保存指标
     metrics = {
         'total_queries': total_queries,
         'wo_rerank_Acc1': wo_rerank_Acc1 / total_queries,
@@ -587,7 +558,6 @@ def main():
         json.dump(metrics, f, ensure_ascii=False, indent=4)
     print(f"结果已保存到 results/{dataflod}/{model}/{dataflod}_candidates.json 和 results/{dataflod}/{model}/{dataflod}_predicted.json")
 
-    # 保存 bad_data 指标
     if bad_total > 0:
         bad_metrics = {
             'total_queries': bad_total,
@@ -607,7 +577,6 @@ def main():
             json.dump(bad_metrics, f, ensure_ascii=False, indent=4)
         print(f"bad_data 指标已保存到 results/{dataflod}/{model}/{dataflod}_tool_OOH_metrics.json")
     
-    # 保存 good_data 指标
     if good_total > 0:
         good_metrics = {
             'total_queries': good_total,
