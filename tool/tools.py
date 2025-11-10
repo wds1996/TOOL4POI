@@ -32,7 +32,6 @@ def filter_poi_by_regions(dataflod: str, regions: List[str], candidate: List[int
                 poi = row['pid']
                 filtered_pois.append(int(poi))
     if len(candidate) != 0:
-        # 将候选列表转换为整数
         candidate = [int(poi) for poi in candidate]
         filtered_pois = [poi for poi in filtered_pois if poi in candidate]
 
