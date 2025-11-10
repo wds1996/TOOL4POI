@@ -9,13 +9,11 @@ from tqdm import tqdm
 
 
 def acc_at_k(preds, target, k):
-    """Accuracy@k: 预测前k个中是否命中真实值"""
     if k > len(preds):
         k = len(preds)
     return 1.0 if target in preds[:k] else 0.0
 
 def jug_mrr(preds, target):
-    """Mrr: Reciprocal Rank（对单个样本）"""
     for i, p in enumerate(preds):
         if p == target:
             return 1.0 / (i + 1)
@@ -59,7 +57,6 @@ def recommend(query_str, candidate_info=None):
         {'role': 'system', 'content': prompt},
         {'role': 'user', 'content': input_str}
     ]
-    # 调用模型
     output = call_qwen(messages, model, tokenizer)
     
     return output
@@ -67,24 +64,19 @@ def recommend(query_str, candidate_info=None):
 
 if __name__ == "__main__":
 
-    # 指定数据集
     dataflod = "NYC"
-    # 加载模型
     # model_id = "/models/Qwen2.5-7B-Instruct"
-    # model_id = "/models/Qwen3-14B"
     model_id = "/models/Qwen2.5-14B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.bfloat16, device_map={"": 3}, attn_implementation="flash_attention_2")
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    # tool_doc
     with open('tool/tool_getinfos.json', 'r', encoding='utf-8') as f:
         getinfo = json.load(f)
 
     with open('tool/tools_retrieve.json', 'r', encoding='utf-8') as f:
         retrieve = json.load(f)
 
-    # dataload
     with open(f'data/{dataflod}/data.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
 
@@ -99,7 +91,6 @@ if __name__ == "__main__":
         target = query["target"]
 
         candidates = None
-        # 模块3：排序
         if candidates:
             candidate_info = get_poi_infos(dataflod, candidates)
         else:
@@ -107,15 +98,15 @@ if __name__ == "__main__":
         next_time = query["next_time"]
         query_str = f"{query_str}\nThe current time is: {next_time}\n"
         respond = recommend(query_str, candidate_info)
-        # 解析最终推荐结果
+
         predicted_pids = candidates if candidates else []
         result = re.search(r"<result>(.*?)</result>", respond)
         if result:
             try:
-                predicted_pids = eval(result.group(1))  # 更宽容，支持单引号
-                # print("最终推荐结果：", result)
+                predicted_pids = eval(result.group(1))
+
             except Exception as e:
-                print("解析失败:", e)
+                print("error:", e)
         else:
             print(respond)
 
