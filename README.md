@@ -42,10 +42,11 @@ python toolRec_multi.py
 
 ### **Cite Us**
 
-bibtex
+```
 @article{wang2025tool4poi,
   title={TOOL4POI: A Tool-Augmented LLM Framework for Next POI Recommendation},
   author={Wang, Dongsheng and Gao, Shen and Huang, Chengrui and Huang, Yuxi and Feng, Ruixiang and Shang, Shuo},
   journal={arXiv preprint arXiv:2511.06405},
   year={2025}
 }
+```
